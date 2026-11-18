@@ -12,7 +12,8 @@ from .models import Role, User, Ticket
 from .security import hash_password
 from fastapi import APIRouter, FastAPI
 from .routers import tickets
-from .routers import auth, tickets
+from .routers import auth, tickets, users
+from fastapi.middleware.cors import CORSMiddleware
 
 def init_db():
     for _ in range(10):
@@ -47,6 +48,15 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="HelpDesk API", lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        o.strip() for o in settings.cors_origins.split(",")
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/api/health")
 def health():
@@ -57,3 +67,4 @@ api.include_router(tickets.router)
 app.include_router(api)
 api.include_router(auth.router)
 api.include_router(tickets.router)
+api.include_router(users.router)

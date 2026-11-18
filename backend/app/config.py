@@ -8,6 +8,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
+        
     )
 
     database_url: str
@@ -15,6 +16,6 @@ class Settings(BaseSettings):
     admin_password: str
     secret_key: str
     access_token_expire_minutes: int = 60
-
+    cors_origins: str = "http://localhost:4200"
 
 settings = Settings()

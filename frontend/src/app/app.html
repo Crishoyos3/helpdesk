@@ -1,0 +1,17 @@
+<header>
+  <a class="brand" routerLink="/">{{ appName }}</a>
+
+  <nav>
+    <a routerLink="/tickets" routerLinkActive="active">Tickets</a>
+    <a routerLink="/users" routerLinkActive="active">Usuarios</a>
+  </nav>
+
+  <div class="session">
+    <span>Invitado</span>
+    <button class="secondary">Salir</button>
+  </div>
+</header>
+
+<main>
+  <router-outlet />
+</main>
