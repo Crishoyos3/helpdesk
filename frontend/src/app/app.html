@@ -1,15 +1,28 @@
 <header>
+ <header>
   <a class="brand" routerLink="/">{{ appName }}</a>
 
-  <nav>
-    <a routerLink="/tickets" routerLinkActive="active">Tickets</a>
-    <a routerLink="/users" routerLinkActive="active">Usuarios</a>
-  </nav>
+  @if (auth.isLoggedIn()) {
+    <nav>
+      <a routerLink="/tickets" routerLinkActive="active">Tickets</a>
 
-  <div class="session">
-    <span>Invitado</span>
-    <button class="secondary">Salir</button>
-  </div>
+      @if (auth.hasRole('admin')) {
+        <a routerLink="/users" routerLinkActive="active">Usuarios</a>
+      }
+    </nav>
+
+    <div class="session">
+      <span>
+        {{ auth.user()?.name }}
+        <small class="badge {{ auth.user()?.role }}">
+          {{ auth.user()?.role }}
+        </small>
+      </span>
+
+      <button class="secondary" (click)="auth.logout()">Salir</button>
+    </div>
+  }
+</header>
 </header>
 
 <main>

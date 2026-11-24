@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
 @Component({
@@ -12,6 +12,8 @@ import { AuthService } from '../../core/auth.service';
 export class Login {
   private auth = inject(AuthService);
 
+  private router = inject(Router);
+
   email = '';
   password = '';
 
@@ -22,11 +24,10 @@ export class Login {
     this.loading.set(true);
     this.error.set('');
 
+
+
     this.auth.login(this.email, this.password).subscribe({
-      next: (r) => {
-        console.log('Respuesta del login:', r);
-        this.loading.set(false);
-      },
+    next: () => this.router.navigate(['/tickets']),
       error: (e) => {
         this.error.set(
           e.status === 401

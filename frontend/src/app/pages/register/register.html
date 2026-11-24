@@ -32,8 +32,13 @@
         required
       />
     </label>
+    @if (error()) {
+  <p class="error">{{ error() }}</p>
+}
 
-    <button>Registrarme</button>
+  <button type="submit" [disabled]="loading()">
+  {{ loading() ? 'Registrando...' : 'Crear cuenta' }}
+</button>
   </form>
 
   <p>
