@@ -1,30 +1,9 @@
-
 import { DatePipe } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Priority, Ticket } from '../../core/models';
-
-// Datos temporales de prueba
-const MOCK_TICKETS: Ticket[] = [
-  {
-    id: 2,
-    title: 'Sin internet en la sala 3',
-    description: 'Ningún equipo tiene conexión',
-    priority: 'high',
-    status: 'open',
-    created_at: '2026-10-10T14:30:00Z',
-    author: { id: 2, name: 'Ana' },
-  },
-  {
-    id: 1,
-    title: 'Impresora atascada',
-    description: 'Las hojas salen arrugadas',
-    priority: 'low',
-    status: 'closed',
-    created_at: '2026-10-09T09:15:00Z',
-    author: { id: 3, name: 'Beto' },
-  },
-];
+import { ApiService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
+import { Priority, Ticket, TicketStatus } from '../../core/models';
 
 @Component({
   imports: [FormsModule, DatePipe],
@@ -33,44 +12,61 @@ const MOCK_TICKETS: Ticket[] = [
   templateUrl: './tickets.html',
 })
 export class Tickets {
-  tickets = signal<Ticket[]>(MOCK_TICKETS);
+  private api = inject(ApiService);
+  protected auth = inject(AuthService);
+
+  tickets = signal<Ticket[]>([]);
+  error = signal('');
+  search = signal('');
+
+  filtered = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    return this.tickets().filter((t) => t.title.toLowerCase().includes(q));
+  });
 
   title = '';
   description = '';
   priority: Priority = 'medium';
 
+  constructor() {
+    this.load();
+  }
+
+  load() {
+    this.api.tickets().subscribe({
+      next: (t) => this.tickets.set(t),
+      error: () => this.error.set('No se pudieron cargar los tickets'),
+    });
+  }
+
   create() {
-    const ticket: Ticket = {
-      id: Date.now(),
-      title: this.title,
-      description: this.description,
-      priority: this.priority,
-      status: 'open',
-      created_at: new Date().toISOString(),
-      author: { id: 0, name: 'Yo' },
-    };
+    this.api
+      .createTicket({ title: this.title, description: this.description, priority: this.priority })
+      .subscribe({
+        next: (t) => {
+          this.tickets.update((list) => [t, ...list]);
+          this.title = this.description = '';
+          this.priority = 'medium';
+        },
+        error: () => this.error.set('No se pudo crear el ticket'),
+      });
+  }
 
-    this.tickets.update((list) => [ticket, ...list]);
-
-    this.title = this.description = '';
-    this.priority = 'medium';
+  setStatus(t: Ticket, status: TicketStatus) {
+    this.api.updateTicketStatus(t.id, status).subscribe({
+      next: (u) => this.tickets.update((list) => list.map((x) => (x.id === u.id ? u : x))),
+      error: () => {
+        this.error.set('No se pudo actualizar el estado');
+        this.load();
+      },
+    });
   }
 
   remove(t: Ticket) {
-    
-    this.tickets.update((list) => list.filter((x) => x.id !== t.id));
+    if (!confirm(`¿Borrar el ticket #${t.id}?`)) return;
+    this.api.deleteTicket(t.id).subscribe({
+      next: () => this.tickets.update((list) => list.filter((x) => x.id !== t.id)),
+      error: () => this.error.set('No se pudo borrar el ticket'),
+    });
   }
-
-  close(t: Ticket) {
-  this.tickets.update((list) =>
-    list.map((x) =>
-      x.id === t.id
-        ? { ...x, status: 'closed' }
-        : x
-    )
-  );
 }
-
-}
-
-

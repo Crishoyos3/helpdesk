@@ -1,42 +1,38 @@
+<h1>{{ auth.hasRole('user') ? 'Mis tickets' : 'Todos los tickets' }}</h1>
 
-<h1>Tickets ({{ tickets().length }})</h1>
+@if (auth.hasRole('user')) {
+  <div class="card">
+    <h2>Nuevo ticket</h2>
+    <form (ngSubmit)="create()">
+      <label>Título <input name="title" [(ngModel)]="title" required maxlength="120" /></label>
+      <label>
+        Descripción
+        <textarea name="description" rows="3" [(ngModel)]="description" required></textarea>
+      </label>
+      <label>
+        Prioridad
+        <select name="priority" [(ngModel)]="priority">
+          <option value="low">Baja</option>
+          <option value="medium">Media</option>
+          <option value="high">Alta</option>
+        </select>
+      </label>
+      <button>Crear ticket</button>
+    </form>
+  </div>
+}
 
-<div class="card">
-  <h2>Nuevo ticket</h2>
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
 
-  <form (ngSubmit)="create()">
-    <label>
-      Título
-      <input
-        name="title"
-        [(ngModel)]="title"
-        required
-        maxlength="120"
-      />
-    </label>
-
-    <label>
-      Descripción
-      <textarea
-        name="description"
-        rows="3"
-        [(ngModel)]="description"
-        required
-      ></textarea>
-    </label>
-
-    <label>
-      Prioridad
-      <select name="priority" [(ngModel)]="priority">
-        <option value="low">Baja</option>
-        <option value="medium">Media</option>
-        <option value="high">Alta</option>
-      </select>
-    </label>
-
-    <button>Crear ticket</button>
-  </form>
-</div>
+<input
+  class="search"
+  type="search"
+  placeholder="Buscar por título..."
+  [ngModel]="search()"
+  (ngModelChange)="search.set($event)"
+/>
 
 <div class="card">
   <table>
@@ -51,44 +47,35 @@
         <th></th>
       </tr>
     </thead>
-
     <tbody>
-      @for (t of tickets(); track t.id) {
+      @for (t of filtered(); track t.id) {
         <tr>
           <td>{{ t.id }}</td>
-
           <td>
             <strong>{{ t.title }}</strong><br />
             <small class="ticket-desc">{{ t.description }}</small>
           </td>
-
           <td>{{ t.author.name }}</td>
-
           <td>
-            <span class="badge {{ t.priority }}">
-              {{ t.priority }}
-            </span>
+            <span class="badge {{ t.priority }}">{{ t.priority }}</span>
           </td>
-
           <td>
-            <span class="badge {{ t.status }}">
-              {{ t.status }}
-            </span>
+            @if (auth.hasRole('agent', 'admin')) {
+              <select [ngModel]="t.status" (ngModelChange)="setStatus(t, $event)">
+                <option value="open">open</option>
+                <option value="in_progress">in_progress</option>
+                <option value="closed">closed</option>
+              </select>
+            } @else {
+              <span class="badge {{ t.status }}">{{ t.status }}</span>
+            }
           </td>
-
           <td>{{ t.created_at | date: 'short' }}</td>
-
           <td>
-  @if (t.status !== 'closed') {
-    <button class="secondary" (click)="close(t)">
-      Cerrar
-    </button>
-  }
-
-  <button class="danger" (click)="remove(t)">
-    Borrar
-  </button>
-</td>
+            @if (auth.hasRole('admin')) {
+              <button class="danger" (click)="remove(t)">Borrar</button>
+            }
+          </td>
         </tr>
       } @empty {
         <tr>
